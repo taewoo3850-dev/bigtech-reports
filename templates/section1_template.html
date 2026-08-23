@@ -96,15 +96,17 @@
 
   .founders {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
     margin: 22px 0 26px;
+    break-inside: avoid;
   }
   .founder-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 4px;
     overflow: hidden;
+    break-inside: avoid;
   }
   .founder-card img {
     width: 100%;
@@ -122,9 +124,10 @@
 
   .product-gallery {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 12px;
     margin: 20px 0 8px;
+    break-inside: avoid;
   }
   .product-gallery.services { margin-top: 12px; }
   .pg-card {
@@ -132,6 +135,7 @@
     border: 1px solid var(--border);
     border-radius: 4px;
     overflow: hidden;
+    break-inside: avoid;
   }
   .pg-card .pg-img-wrap {
     height: 112px;
@@ -175,6 +179,7 @@
     border-radius: 4px;
     padding: 18px 20px;
     margin: 8px 0 24px;
+    break-inside: avoid;
   }
   .biz-row {
     display: flex;
@@ -195,6 +200,7 @@
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 8px;
+    break-inside: avoid;
   }
   figure.chart img { width: 100%; display: block; border-radius: 2px; }
   figcaption.src {
