@@ -21,20 +21,20 @@ const founderCards = [
       </div>`).join('');
 
 const hwCards = [
-  ['iphone_official.jpg', '아이폰'],
-  ['macbook_official.jpg', '맥'],
-  ['applewatch_official.jpg', '애플워치'],
-  ['airpods_official.jpg', '에어팟'],
-].map(([f, name]) => `
-      <div class="pg-card is-photo"><div class="pg-img-wrap"><img src="${b64img(f, 'image/jpeg')}" alt="${name}"></div><div class="pg-cap">${name}</div></div>`).join('');
+  ['iphone_official.jpg', '아이폰', 'https://www.apple.com/kr/iphone/'],
+  ['macbook_official.jpg', '맥', 'https://www.apple.com/kr/mac/'],
+  ['applewatch_official.jpg', '애플워치', 'https://www.apple.com/kr/watch/'],
+  ['airpods_official.jpg', '에어팟', 'https://www.apple.com/kr/airpods/'],
+].map(([f, name, url]) => `
+      <a class="pg-card is-photo" href="${url}"><div class="pg-img-wrap"><img src="${b64img(f, 'image/jpeg')}" alt="${name}"></div><div class="pg-cap">${name}<span class="pg-link-hint">자세히 보기 →</span></div></a>`).join('');
 
 const svcCards = [
-  ['icloud_icon.png', '아이클라우드'],
-  ['applemusic_icon.png', '애플뮤직'],
-  ['appstore_icon.png', '앱스토어'],
-  ['appletv_logo.png', '애플TV+'],
-].map(([f, name]) => `
-      <div class="pg-card is-icon"><div class="pg-img-wrap"><img src="${b64img(f, 'image/png')}" alt="${name}"></div><div class="pg-cap">${name}</div></div>`).join('');
+  ['icloud_icon.png', '아이클라우드', 'https://www.apple.com/kr/icloud/'],
+  ['applemusic_icon.png', '애플뮤직', 'https://www.apple.com/kr/apple-music/'],
+  ['appstore_icon.png', '앱스토어', 'https://www.apple.com/kr/app-store/'],
+  ['appletv_logo.png', '애플TV+', 'https://www.apple.com/kr/apple-tv-plus/'],
+].map(([f, name, url]) => `
+      <a class="pg-card is-icon" href="${url}"><div class="pg-img-wrap"><img src="${b64img(f, 'image/png')}" alt="${name}"></div><div class="pg-cap">${name}<span class="pg-link-hint">자세히 보기 →</span></div></a>`).join('');
 
 const bizRows = [
   ['아이폰', '스마트폰 · 490억 3000만 달러'],
