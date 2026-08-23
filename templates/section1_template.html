@@ -223,6 +223,31 @@
   }
   figcaption.src a { color: var(--accent-blue); text-decoration: underline; }
 
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    margin: 4px 0 4px;
+  }
+  .data-table th, .data-table td {
+    padding: 7px 6px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  .data-table th:first-child, .data-table td:first-child { text-align: left; color: var(--text-muted); }
+  .data-table thead th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border-);
+    border-bottom: 1px solid var(--accent-blue);
+  }
+  .data-table tbody tr:last-child td { border-bottom: none; font-weight: 600; color: var(--text); }
+
   .callout {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 12px;
