@@ -1,0 +1,215 @@
+<meta charset="utf-8">
+<title>{{COMPANY_NAME}} 리포트</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap');
+
+  :root {
+    --bg: #14151b;
+    --surface: #1b1c24;
+    --surface-2: #21222c;
+    --text: #f0efe9;
+    --text-muted: #a3a3ab;
+    --border: #34353f;
+    --accent-blue: #7fa2ff;
+    --accent-amber: #f2b632;
+    --tag-bg: #262733;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 120px;
+  }
+  .kicker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 18px;
+  }
+  .kicker .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-amber); }
+
+  h1.headline {
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4.4vw, 40px);
+    line-height: 1.32;
+    text-wrap: balance;
+    margin: 0 0 20px;
+    letter-spacing: -0.01em;
+  }
+  .dek {
+    font-size: 17px;
+    color: var(--text-muted);
+    max-width: 62ch;
+    margin: 0 0 40px;
+  }
+  .meta-row {
+    display: flex;
+    gap: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0;
+    margin-bottom: 48px;
+  }
+
+  section.part {
+    margin-bottom: 56px;
+  }
+  .part-label {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-blue);
+    margin-bottom: 14px;
+  }
+  .part-label .idx { color: var(--text-muted); font-size: 15px; }
+  h2.part-title {
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 700;
+    font-size: 26px;
+    margin: 0 0 18px;
+    text-wrap: balance;
+  }
+  p { font-size: 16px; margin: 0 0 14px; }
+  p.lead { color: var(--text); }
+
+  .biz-summary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 18px 20px;
+    margin: 8px 0 24px;
+    break-inside: avoid;
+  }
+  .biz-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14.5px;
+    gap: 12px;
+  }
+  .biz-row:last-child { border-bottom: none; }
+  .biz-row .biz-name { font-weight: 500; }
+  .biz-row .biz-desc { color: var(--text-muted); text-align: right; font-size: 13px; }
+
+  figure.chart {
+    margin: 8px 0 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px;
+    break-inside: avoid;
+  }
+  figure.chart img { width: 100%; display: block; border-radius: 2px; }
+  figcaption.src {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 10px;
+    padding: 0 4px 2px;
+  }
+  figcaption.src a { color: var(--accent-blue); text-decoration: underline; }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    margin: 4px 0 4px;
+  }
+  .data-table th, .data-table td {
+    padding: 7px 6px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  .data-table th:first-child, .data-table td:first-child { text-align: left; color: var(--text-muted); }
+  .data-table thead th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--accent-blue);
+  }
+  .data-table tbody tr:last-child td { border-bottom: none; font-weight: 600; color: var(--text); }
+
+  .callout {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--tag-bg);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 20px 0 0;
+  }
+  .callout a { color: var(--accent-blue); text-decoration: underline; }
+
+  .key-points {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .key-points li {
+    display: flex;
+    gap: 12px;
+    font-size: 16px;
+    align-items: flex-start;
+  }
+  .key-points li::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    margin-top: 9px;
+    flex-shrink: 0;
+  }
+
+  .footer-note {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+</style>
+
+<div class="page">
+  <div class="kicker"><span class="dot"></span>빅테크 기업 심층 리포트 · {{DAY_LABEL}}</div>
+  <h1 class="headline">{{HEADLINE}}</h1>
+  <p class="dek">{{DEK}}</p>
+  <div class="meta-row">
+    <span>발행일 {{PUBLISH_DATE}}</span>
+    <span>{{COMPANY_NAME}}</span>
+  </div>
+
+  {{PARTS_HTML}}
+</div>
