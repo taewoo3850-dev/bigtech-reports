@@ -3,6 +3,22 @@ const path = require('path');
 
 const REPO = path.join(__dirname, '..');
 const tpl = fs.readFileSync(path.join(REPO, 'templates', 'section_generic_template.html'), 'utf8');
+const CHIPS_DIR = path.join(REPO, 'assets', 'chips');
+
+function b64chip(name) {
+  const data = fs.readFileSync(path.join(CHIPS_DIR, name));
+  return `data:image/jpeg;base64,${data.toString('base64')}`;
+}
+
+// ---- Real chip photo pair (with required CC BY-SA attribution) ----
+function chipPhotoPair(items, { width = 640 } = {}) {
+  const cards = items.map((it) => `
+    <div style="flex:1;background:#1b1c24;border:1px solid #34353f;border-radius:8px;overflow:hidden;">
+      <img src="${it.src}" alt="${it.alt}" style="width:100%;display:block;">
+      <div style="padding:8px 10px;font-size:10.5px;color:#a3a3ab;font-family:'Noto Sans KR',sans-serif;">${it.caption}</div>
+    </div>`).join('');
+  return `<div style="display:flex;gap:12px;">${cards}</div>`;
+}
 
 // ---- Signal-flow diagram: device <-> chip <-> external node ----
 function signalFlowDiagram(left, chip, right, { width = 640, height = 150 } = {}) {
@@ -203,6 +219,9 @@ const diagram = supplyChainDiagram([
 ], {});
 
 // ---- 모뎀칩 섹션 다이어그램 ----
+const modemChipPhoto = chipPhotoPair([
+  { src: b64chip('qualcomm_qsd8250_sm.jpg'), alt: '퀄컴 QSD8250 칩 실물 사진', caption: '퀄컴 칩 실물 (QSD8250, 스마트폰 기판 위) · © Raimond Spekking / CC BY-SA 4.0' },
+]);
 const modemFlowDiagram = signalFlowDiagram(
   { title: 'iPhone', sub: '전기 신호(데이터·음성)', arrowLabel: '전기신호' },
   { label: '모뎀칩', sub: '신호 ↔ 전파 변환' },
@@ -237,6 +256,9 @@ const modemRegionSplit = regionSplitDiagram(
 );
 
 // ---- 근거리무선칩 섹션 다이어그램 ----
+const wirelessChipPhoto = chipPhotoPair([
+  { src: b64chip('broadcom_bcm94331_sm.jpg'), alt: '브로드컴 BCM2070 블루투스 칩 실물 사진', caption: '브로드컴 칩 실물 (BCM2070, 블루투스 모듈) · © Raimond Spekking / CC BY-SA 4.0' },
+]);
 const wirelessFlowDiagram = signalFlowDiagram(
   { title: 'iPhone', sub: '앱·기기 데이터', arrowLabel: '전기신호' },
   { label: 'N1 칩', sub: '와이파이·블루투스 변환' },
@@ -324,6 +346,10 @@ const parts = `
       <figcaption class="src">퀄컴 모뎀 · 애플 C1 · 애플 C2 비교</figcaption>
     </figure>
     <figure class="chart">
+      ${modemChipPhoto}
+      <figcaption class="src">참고: 애플 C1·C2는 다이 사진을 공개하지 않아 실물 사진이 없음 (퀄컴 칩은 참고용 실물 예시, 세대는 다름)</figcaption>
+    </figure>
+    <figure class="chart">
       ${modemTimeline}
       <figcaption class="src">애플 자체 모뎀 개발 타임라인</figcaption>
     </figure>
@@ -348,6 +374,10 @@ const parts = `
     <figure class="chart">
       ${wirelessCompareCards}
       <figcaption class="src">브로드컴 칩 · 애플 N1 비교</figcaption>
+    </figure>
+    <figure class="chart">
+      ${wirelessChipPhoto}
+      <figcaption class="src">참고: 애플 N1은 다이 사진을 공개하지 않아 실물 사진이 없음 (브로드컴 칩은 참고용 실물 예시, 세대는 다름)</figcaption>
     </figure>
     <figure class="chart">
       ${wirelessTimeline}
