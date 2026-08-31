@@ -4,6 +4,150 @@ const path = require('path');
 const REPO = path.join(__dirname, '..');
 const tpl = fs.readFileSync(path.join(REPO, 'templates', 'section_generic_template.html'), 'utf8');
 
+// ---- Signal-flow diagram: device <-> chip <-> external node ----
+function signalFlowDiagram(left, chip, right, { width = 640, height = 150 } = {}) {
+  const boxY = 45, boxH = 60;
+  const leftX = 20, leftW = 140;
+  const chipX = width / 2 - 90, chipW = 180;
+  const rightX = width - 160, rightW = 140;
+  const midY = boxY + boxH / 2;
+  return `
+    <svg viewBox="0 0 ${width} ${height}" width="100%" height="auto" role="img" aria-label="${chip.label} 신호 흐름도">
+      <rect x="${leftX}" y="${boxY}" width="${leftW}" height="${boxH}" rx="8" fill="#1b1c24" stroke="#34353f" stroke-width="1.5"/>
+      <text x="${leftX + leftW / 2}" y="${midY - 4}" font-size="13" font-weight="700" fill="#f0efe9" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${left.title}</text>
+      <text x="${leftX + leftW / 2}" y="${midY + 14}" font-size="10" fill="#a3a3ab" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${left.sub}</text>
+
+      <rect x="${chipX}" y="${boxY - 8}" width="${chipW}" height="${boxH + 16}" rx="8" fill="#262733" stroke="#f2b632" stroke-width="2"/>
+      <text x="${chipX + chipW / 2}" y="${midY - 6}" font-size="13" font-weight="700" fill="#f2b632" text-anchor="middle" font-family="IBM Plex Mono, monospace">${chip.label}</text>
+      <text x="${chipX + chipW / 2}" y="${midY + 12}" font-size="10" fill="#d8d8dc" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${chip.sub}</text>
+
+      <rect x="${rightX}" y="${boxY}" width="${rightW}" height="${boxH}" rx="8" fill="#1b1c24" stroke="#34353f" stroke-width="1.5"/>
+      <text x="${rightX + rightW / 2}" y="${midY - 4}" font-size="13" font-weight="700" fill="#f0efe9" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${right.title}</text>
+      <text x="${rightX + rightW / 2}" y="${midY + 14}" font-size="10" fill="#a3a3ab" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${right.sub}</text>
+
+      <line x1="${leftX + leftW}" y1="${midY}" x2="${chipX}" y2="${midY}" stroke="#7fa2ff" stroke-width="2"/>
+      <polygon points="${chipX},${midY - 5} ${chipX},${midY + 5} ${chipX + 9},${midY}" fill="#7fa2ff"/>
+      <polygon points="${leftX + leftW},${midY - 5} ${leftX + leftW},${midY + 5} ${leftX + leftW - 9},${midY}" fill="#7fa2ff"/>
+
+      <line x1="${chipX + chipW}" y1="${midY}" x2="${rightX}" y2="${midY}" stroke="#6fd6a8" stroke-width="2" stroke-dasharray="4 3"/>
+      <polygon points="${rightX},${midY - 5} ${rightX},${midY + 5} ${rightX + 9},${midY}" fill="#6fd6a8"/>
+      <polygon points="${chipX + chipW},${midY - 5} ${chipX + chipW},${midY + 5} ${chipX + chipW - 9},${midY}" fill="#6fd6a8"/>
+
+      <text x="${(leftX + leftW + chipX) / 2}" y="${midY - 14}" font-size="9.5" fill="#7fa2ff" text-anchor="middle" font-family="IBM Plex Mono, monospace">${left.arrowLabel || ''}</text>
+      <text x="${(chipX + chipW + rightX) / 2}" y="${midY - 14}" font-size="9.5" fill="#6fd6a8" text-anchor="middle" font-family="IBM Plex Mono, monospace">${right.arrowLabel || ''}</text>
+    </svg>`;
+}
+
+// ---- Comparison cards (2-3 items side by side) ----
+function comparisonCards(items, { width = 640, cardH = 130 } = {}) {
+  const gap = 14;
+  const cardW = (width - gap * (items.length - 1)) / items.length;
+  const cards = items.map((it, i) => {
+    const x = i * (cardW + gap);
+    const rows = it.rows.map((r, ri) => `
+      <text x="14" y="${68 + ri * 18}" font-size="10.5" fill="#a3a3ab" font-family="'Noto Sans KR', sans-serif">${r.k}</text>
+      <text x="${cardW - 14}" y="${68 + ri * 18}" font-size="10.5" fill="#f0efe9" text-anchor="end" font-family="'Noto Sans KR', sans-serif">${r.v}</text>`).join('');
+    return `
+      <g transform="translate(${x},0)">
+        <rect x="0" y="0" width="${cardW}" height="${cardH}" rx="8" fill="#1b1c24" stroke="${it.color}" stroke-width="1.5"/>
+        <rect x="0" y="0" width="${cardW}" height="34" rx="8" fill="${it.color}" fill-opacity="0.18"/>
+        <text x="14" y="22" font-size="13" font-weight="700" fill="${it.color}" font-family="IBM Plex Mono, monospace">${it.name}</text>
+        ${rows}
+      </g>`;
+  }).join('');
+  return `
+    <svg viewBox="0 0 ${width} ${cardH}" width="100%" height="auto" role="img" aria-label="비교 카드">${cards}</svg>`;
+}
+
+// ---- Timeline diagram ----
+function timelineDiagram(events, { width = 640, height = 140 } = {}) {
+  const padL = 30, padR = 30;
+  const y = 60;
+  const n = events.length;
+  const step = (width - padL - padR) / (n - 1);
+  const line = `<line x1="${padL}" y1="${y}" x2="${width - padR}" y2="${y}" stroke="#34353f" stroke-width="2"/>`;
+  const items = events.map((e, i) => {
+    const x = padL + i * step;
+    const above = i % 2 === 0;
+    const labelY = above ? y - 20 : y + 34;
+    const dateY = above ? y - 34 : y + 50;
+    return `
+      <circle cx="${x}" cy="${y}" r="6" fill="${e.highlight ? '#f2b632' : '#7fa2ff'}"/>
+      <line x1="${x}" y1="${y}" x2="${x}" y2="${above ? y - 12 : y + 12}" stroke="${e.highlight ? '#f2b632' : '#7fa2ff'}" stroke-width="1.5"/>
+      <text x="${x}" y="${dateY}" font-size="10" fill="#a3a3ab" text-anchor="middle" font-family="IBM Plex Mono, monospace">${e.date}</text>
+      <text x="${x}" y="${labelY}" font-size="11" fill="#f0efe9" text-anchor="middle" font-family="'Noto Sans KR', sans-serif" font-weight="${e.highlight ? '700' : '400'}">${e.label}</text>`;
+  }).join('');
+  return `
+    <svg viewBox="0 0 ${width} ${height}" width="100%" height="auto" role="img" aria-label="개발 타임라인">${line}${items}</svg>`;
+}
+
+// ---- Region split diagram (e.g. US vs rest-of-world) ----
+function regionSplitDiagram(regionA, regionB, { width = 640, height = 150 } = {}) {
+  const gap = 16;
+  const boxW = (width - gap) / 2;
+  const box = (r, x) => `
+    <g transform="translate(${x},0)">
+      <rect x="0" y="0" width="${boxW}" height="${height}" rx="10" fill="#1b1c24" stroke="${r.color}" stroke-width="2"/>
+      <text x="${boxW / 2}" y="30" font-size="14" font-weight="700" fill="${r.color}" text-anchor="middle" font-family="IBM Plex Mono, monospace">${r.title}</text>
+      <text x="${boxW / 2}" y="60" font-size="16" font-weight="700" fill="#f0efe9" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${r.chip}</text>
+      <text x="${boxW / 2}" y="84" font-size="10.5" fill="#a3a3ab" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${r.detail1}</text>
+      <text x="${boxW / 2}" y="102" font-size="10.5" fill="#a3a3ab" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${r.detail2}</text>
+    </g>`;
+  return `
+    <svg viewBox="0 0 ${width} ${height}" width="100%" height="auto" role="img" aria-label="지역별 비교">
+      ${box(regionA, 0)}
+      ${box(regionB, boxW + gap)}
+    </svg>`;
+}
+
+// ---- Product-application diagram (chip goes into which products) ----
+function productApplicationDiagram(chipLabel, products, { width = 640 } = {}) {
+  const hubW = 140, hubH = 44;
+  const hubX = width / 2 - hubW / 2, hubY = 14;
+  const cardW = 100, cardH = 56, gap = 14;
+  const totalW = products.length * cardW + (products.length - 1) * gap;
+  const startX = width / 2 - totalW / 2;
+  const cardY = 100;
+  const hubCx = width / 2, hubCy = hubY + hubH;
+  const cards = products.map((p, i) => {
+    const x = startX + i * (cardW + gap);
+    const cx = x + cardW / 2;
+    return `
+      <line x1="${hubCx}" y1="${hubCy}" x2="${cx}" y2="${cardY}" stroke="${p.available ? '#6fd6a8' : '#34353f'}" stroke-width="1.5" stroke-dasharray="${p.available ? '0' : '4 3'}"/>
+      <rect x="${x}" y="${cardY}" width="${cardW}" height="${cardH}" rx="8" fill="#1b1c24" stroke="${p.available ? '#6fd6a8' : '#34353f'}" stroke-width="1.5"/>
+      <text x="${cx}" y="${cardY + 24}" font-size="11.5" font-weight="700" fill="${p.available ? '#f0efe9' : '#8f97a8'}" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${p.name}</text>
+      <text x="${cx}" y="${cardY + 42}" font-size="9.5" fill="#a3a3ab" text-anchor="middle" font-family="IBM Plex Mono, monospace">${p.when}</text>`;
+  }).join('');
+  return `
+    <svg viewBox="0 0 ${width} ${cardY + cardH + 16}" width="100%" height="auto" role="img" aria-label="${chipLabel} 적용 제품">
+      <rect x="${hubX}" y="${hubY}" width="${hubW}" height="${hubH}" rx="8" fill="#f2b632" />
+      <text x="${width / 2}" y="${hubY + hubH / 2 + 5}" font-size="13" font-weight="700" fill="#14151b" text-anchor="middle" font-family="IBM Plex Mono, monospace">${chipLabel}</text>
+      ${cards}
+    </svg>`;
+}
+
+// ---- Dual-track strategy diagram (self-develop + still partner) ----
+function dualTrackDiagram(center, trackA, trackB, { width = 640, height = 180 } = {}) {
+  const cx = width / 2, cy = 26;
+  return `
+    <svg viewBox="0 0 ${width} ${height}" width="100%" height="auto" role="img" aria-label="이중 전략 다이어그램">
+      <rect x="${cx - 70}" y="6" width="140" height="36" rx="8" fill="#7fa2ff"/>
+      <text x="${cx}" y="29" font-size="13" font-weight="700" fill="#14151b" text-anchor="middle" font-family="IBM Plex Mono, monospace">${center}</text>
+
+      <line x1="${cx}" y1="42" x2="${cx - 150}" y2="90" stroke="#6fd6a8" stroke-width="2"/>
+      <rect x="${cx - 290}" y="90" width="280" height="72" rx="8" fill="#1b1c24" stroke="#6fd6a8" stroke-width="1.5"/>
+      <text x="${cx - 150}" y="112" font-size="12.5" font-weight="700" fill="#6fd6a8" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${trackA.title}</text>
+      <text x="${cx - 150}" y="132" font-size="10.5" fill="#d8d8dc" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${trackA.line1}</text>
+      <text x="${cx - 150}" y="148" font-size="10.5" fill="#d8d8dc" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${trackA.line2}</text>
+
+      <line x1="${cx}" y1="42" x2="${cx + 150}" y2="90" stroke="#f2b632" stroke-width="2"/>
+      <rect x="${cx + 10}" y="90" width="280" height="72" rx="8" fill="#1b1c24" stroke="#f2b632" stroke-width="1.5"/>
+      <text x="${cx + 150}" y="112" font-size="12.5" font-weight="700" fill="#f2b632" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${trackB.title}</text>
+      <text x="${cx + 150}" y="132" font-size="10.5" fill="#d8d8dc" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${trackB.line1}</text>
+      <text x="${cx + 150}" y="148" font-size="10.5" fill="#d8d8dc" text-anchor="middle" font-family="'Noto Sans KR', sans-serif">${trackB.line2}</text>
+    </svg>`;
+}
+
 // ---- Supply-chain map diagram (pure SVG, no external assets) ----
 function supplyChainDiagram(rows, { width = 640 } = {}) {
   const rowH = 76;
@@ -58,6 +202,76 @@ const diagram = supplyChainDiagram([
   { category: '최종 조립', companies: ['폭스콘', '타타그룹'], note: '중국 중심에서 인도로 급속히 이전 중', color: '#8f97a8' },
 ], {});
 
+// ---- 모뎀칩 섹션 다이어그램 ----
+const modemFlowDiagram = signalFlowDiagram(
+  { title: 'iPhone', sub: '전기 신호(데이터·음성)', arrowLabel: '전기신호' },
+  { label: '모뎀칩', sub: '신호 ↔ 전파 변환' },
+  { title: '기지국', sub: '통신사 네트워크', arrowLabel: '무선전파(LTE/5G)' }
+);
+const modemCompareCards = comparisonCards([
+  { name: '퀄컴 모뎀', color: '#7fa2ff', rows: [
+    { k: '제조사', v: '퀄컴(미국)' },
+    { k: '밀리미터파', v: '지원' },
+    { k: '2026년 용도', v: '미국 판매분 전용' },
+  ]},
+  { name: '애플 C1', color: '#6fd6a8', rows: [
+    { k: '출시', v: '2025년 초' },
+    { k: '최초탑재', v: '아이폰16e' },
+    { k: '특징', v: '전력효율 25%↑' },
+  ]},
+  { name: '애플 C2', color: '#f2b632', rows: [
+    { k: '출시', v: '2026년' },
+    { k: '탑재모델', v: '아이폰18 프로' },
+    { k: '한계', v: '밀리미터파 미지원' },
+  ]},
+]);
+const modemTimeline = timelineDiagram([
+  { date: '2019', label: '인텔 모뎀사업부 인수', highlight: false },
+  { date: '2025.02', label: 'C1 최초 탑재(16e)', highlight: true },
+  { date: '2026', label: 'C2 출시(18프로)', highlight: true },
+  { date: '2027(예상)', label: 'C3, 퀄컴 성능 추월 목표', highlight: false },
+]);
+const modemRegionSplit = regionSplitDiagram(
+  { title: '미국 판매 모델', chip: '퀄컴 모뎀', detail1: '밀리미터파 지원 → 최고속도 우위', detail2: '대신 배터리 효율은 낮음', color: '#7fa2ff' },
+  { title: '한국 등 나머지 국가', chip: '애플 C2 모뎀', detail1: '밀리미터파 미지원', detail2: '대신 배터리 효율 우위', color: '#f2b632' }
+);
+
+// ---- 근거리무선칩 섹션 다이어그램 ----
+const wirelessFlowDiagram = signalFlowDiagram(
+  { title: 'iPhone', sub: '앱·기기 데이터', arrowLabel: '전기신호' },
+  { label: 'N1 칩', sub: '와이파이·블루투스 변환' },
+  { title: '공유기·에어팟', sub: '근거리 무선기기', arrowLabel: 'WiFi7 / BT6' }
+);
+const wirelessCompareCards = comparisonCards([
+  { name: '브로드컴 칩', color: '#7fa2ff', rows: [
+    { k: '제조사', v: '브로드컴(미국)' },
+    { k: '역할', v: '기존 와이파이·블루투스 공급' },
+    { k: '2026년', v: '45조원 신규계약 + 2031년까지 협력' },
+  ]},
+  { name: '애플 N1', color: '#6fd6a8', rows: [
+    { k: '개발 코드명', v: '프록시마' },
+    { k: '최초탑재', v: '아이폰17·에어(2025)' },
+    { k: '스펙', v: '와이파이7·블루투스6·스레드' },
+  ]},
+]);
+const wirelessTimeline = timelineDiagram([
+  { date: '~2024', label: '전량 브로드컴 의존', highlight: false },
+  { date: '2024.12', label: '자체칩 개발 보도(프록시마)', highlight: false },
+  { date: '2025.09', label: 'N1 공식 공개(17·에어)', highlight: true },
+  { date: '2026~', label: '아이패드·맥까지 확대', highlight: true },
+]);
+const wirelessProductDiagram = productApplicationDiagram('N1 칩', [
+  { name: '아이폰', when: '2025~', available: true },
+  { name: '애플TV', when: '2025~', available: true },
+  { name: '홈팟미니', when: '2025~', available: true },
+  { name: '아이패드', when: '2026~', available: false },
+  { name: '맥', when: '2026~', available: false },
+]);
+const wirelessDualTrack = dualTrackDiagram('애플',
+  { title: '자체 개발 확대 (N1)', line1: '와이파이7·블루투스6 자체 칩', line2: '아이패드·맥까지 적용 확대' },
+  { title: '브로드컴 협력 유지', line1: '45조원 규모 무선통신칩 신규계약', line2: '맞춤형 반도체 생산 2031년까지 연장' }
+);
+
 const parts = `
   <section class="part">
     <div class="part-label"><span class="idx">01</span> 부품 공급망</div>
@@ -100,8 +314,24 @@ const parts = `
     <div class="part-label"><span class="idx">05</span> 모뎀칩</div>
     <h2 class="part-title">퀄컴 매출의 20%를 차지했던 고객, 이제 절반은 독립했다</h2>
     <p class="lead">모뎀칩은 아이폰이 기지국과 무선으로 통화·데이터를 주고받게 해주는 통신 전용 반도체다. 화면·연산을 담당하는 AP와 달리, "밖과 연결되는 입과 귀" 역할만 전담한다. 애플은 AP는 2010년부터 직접 설계해왔지만, 모뎀칩만큼은 오랫동안 퀄컴 제품에 의존했다 — 해외 리서치사 트레피스(Trefis) 추정에 따르면 한때 애플 한 곳에서 나오는 매출이 퀄컴 모뎀 사업 매출의 약 20%에 달할 정도로 비중이 컸다.</p>
+    <figure class="chart">
+      ${modemFlowDiagram}
+      <figcaption class="src">모뎀칩의 역할: 기기 안 전기신호를 기지국이 알아듣는 무선전파로 변환</figcaption>
+    </figure>
     <p>애플은 이 의존을 끊기 위해 2019년 인텔의 모뎀 사업부를 인수했고, 이를 기반으로 개발한 첫 자체 모뎀 'C1'을 2025년 초 아이폰16e에 처음 탑재했다. 실제 사용해본 결과 퀄컴 모뎀과 속도 차이는 거의 느껴지지 않았고, 전력 소모는 오히려 약 25% 낮아 배터리 효율에서는 앞서는 것으로 평가됐다. 후속작인 'C2' 모뎀은 2026년 출시돼 아이폰18 프로에 탑재된다.</p>
+    <figure class="chart">
+      ${modemCompareCards}
+      <figcaption class="src">퀄컴 모뎀 · 애플 C1 · 애플 C2 비교</figcaption>
+    </figure>
+    <figure class="chart">
+      ${modemTimeline}
+      <figcaption class="src">애플 자체 모뎀 개발 타임라인</figcaption>
+    </figure>
     <p>다만 C2도 아직 완전히 퀄컴을 넘어서지는 못했다. 초고속 5G 통신에 쓰이는 '밀리미터파' 기능을 지원하지 못하는 게 발목을 잡는다. 이미 밀리미터파 인프라에 막대한 투자를 해온 미국 통신사들이 이 기능이 빠진 모델을 받아들이지 않으면서, 2026년 현재 아이폰18 프로는 지역별로 다른 모뎀을 쓴다 — 미국 판매분은 여전히 퀄컴 모뎀을, 한국을 포함한 나머지 대부분 국가는 애플 자체 C2 모뎀을 넣는다. 그 결과 미국 모델은 퀄컴 덕에 최고 속도가 더 빠른 대신, 나머지 국가 모델보다 배터리 효율에서는 밀린다는 평가도 나온다.</p>
+    <figure class="chart">
+      ${modemRegionSplit}
+      <figcaption class="src">2026년 현재 아이폰18 프로의 지역별 모뎀 탑재 현황</figcaption>
+    </figure>
     <p>정리하면 애플은 절반의 성공을 거둔 상태다. 성능과 효율에서는 퀄컴을 위협할 수준까지 따라왔지만, 밀리미터파라는 마지막 한 조각 때문에 세계 최대 시장인 미국에서는 여전히 퀄컴에 기대야 한다.</p>
     <div class="callout" style="margin-top:16px;">출처: <a href="https://zdnet.co.kr/view/?no=20260703091105">ZDNet코리아(2026.07.03)</a> · <a href="https://zdnet.co.kr/view/?no=20250301063853">ZDNet코리아(2025.03.01)</a> · <a href="https://www.trefis.com/stock/qcom/articles-v3/610419/qualcomms-largest-revenue-line-is-shrinking-from-both-sides/2026-08-06">Trefis(2026.08.06, 해외 리서치사 추정)</a></div>
   </section>
@@ -110,8 +340,28 @@ const parts = `
     <div class="part-label"><span class="idx">06</span> 근거리무선칩</div>
     <h2 class="part-title">와이파이·블루투스마저 직접 만든다 — 그런데 브로드컴도 계속 쓴다</h2>
     <p class="lead">근거리무선칩은 와이파이·블루투스처럼 가까운 거리에서 기기끼리 연결해주는 반도체다. 기지국과 통신하는 모뎀과 달리, 집 와이파이 공유기에 연결하거나 에어팟과 블루투스로 짝지을 때 쓰인다. 애플은 오랫동안 이 칩을 미국 반도체 회사 브로드컴에서 사다 썼다.</p>
+    <figure class="chart">
+      ${wirelessFlowDiagram}
+      <figcaption class="src">근거리무선칩의 역할: 아이폰과 공유기·에어팟 등 주변기기를 무선으로 연결</figcaption>
+    </figure>
     <p>애플은 부품사 의존을 줄이고, 칩끼리 더 긴밀하게 통합해 배터리 효율을 높이려는 목적으로 자체 칩 개발에 나섰다. 개발 당시 코드명은 '프록시마'였고, 2025년 하반기 정식 출시되면서 'N1'이라는 이름이 붙었다. N1은 아이폰17과 아이폰 에어에 처음 탑재됐고, 와이파이7·블루투스6에 더해 스마트홈 기기용 무선규격 '스레드'까지 지원한다. 애초 계획대로 아이폰·애플TV·홈팟미니를 시작으로, 2026년부터는 아이패드·맥까지 적용 범위를 넓히고 있다.</p>
+    <figure class="chart">
+      ${wirelessCompareCards}
+      <figcaption class="src">브로드컴 칩 · 애플 N1 비교</figcaption>
+    </figure>
+    <figure class="chart">
+      ${wirelessTimeline}
+      <figcaption class="src">애플 근거리무선칩(N1) 개발 타임라인</figcaption>
+    </figure>
+    <figure class="chart">
+      ${wirelessProductDiagram}
+      <figcaption class="src">N1 칩 적용 제품 현황 (실선: 이미 적용 · 점선: 2026년 이후 확대 예정)</figcaption>
+    </figure>
     <p>흥미로운 건 자체 칩을 확대하면서도 브로드컴과 완전히 갈라서지는 않았다는 점이다. 애플은 2026년 브로드컴과 5G·GPS·블루투스·와이파이 등을 아우르는 300억 달러(약 45조원) 규모 무선통신칩 계약을 새로 맺었고, 별도로 맞춤형 반도체 생산 협력도 2031년까지 연장했다. 즉 근거리무선칩은 "자체 개발(N1)로 완전히 대체"하는 게 아니라, "자체 칩 비중을 늘리면서도 브로드컴과의 협력은 계속 유지"하는 이중 전략에 가깝다.</p>
+    <figure class="chart">
+      ${wirelessDualTrack}
+      <figcaption class="src">애플의 이중 전략: 자체 개발 확대 + 브로드컴 협력 유지</figcaption>
+    </figure>
     <div class="callout" style="margin-top:16px;">출처: <a href="https://zdnet.co.kr/view/?no=20241213075443">ZDNet코리아(2024.12.13)</a> · <a href="https://zdnet.co.kr/view/?no=20250910074004">ZDNet코리아(2025.09.10)</a> · <a href="https://zdnet.co.kr/view/?no=20260707082032">ZDNet코리아(2026.07.07)</a></div>
   </section>
 
